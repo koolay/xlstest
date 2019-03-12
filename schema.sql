@@ -1,7 +1,9 @@
-CREATE DATABASE IF NOT EXISTS `xlstest`
+CREATE DATABASE IF NOT EXISTS `xlstest`;
+
+USE xlstest;
 
 CREATE TABLE IF NOT EXISTS `logs` (
-    `id` int(11) NOT NULL auto_increment, 
+    `id` int(11) NOT NULL auto_increment,
     `page_url` varchar(1024)  NOT NULL,
     `product_name` varchar(255)  NOT NULL,
     `appid` varchar(255) NOT NULL,

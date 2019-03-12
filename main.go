@@ -1,24 +1,31 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 	"sync"
 	"time"
 
 	"context"
 
+	"github.com/gofrs/uuid"
 	"github.com/plandem/xlsx"
+	"mingyuanyun.com/mic/dmp-datahub/store"
 
+	ee "github.com/eaciit/hoboexcel"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
 var (
-	dbURL = "root:dev@tcp(localhost:3306)/xlstest"
+	dbURL    = "root:dev@tcp(localhost:3306)/xlstest?parseTime=true"
+	filename = "xlstest.xlsx"
 )
 
 type Log struct {
@@ -47,6 +54,99 @@ func conn() (*sqlx.DB, error) {
 	conn.SetMaxOpenConns(10)
 	conn.SetMaxIdleConns(0)
 	return conn, err
+}
+
+type ExcelFetcher struct {
+	CurRow int
+	MaxRow int
+	Rows   *sqlx.Rows
+}
+
+func (f *ExcelFetcher) NextRow() []string {
+
+	if f.CurRow <= f.MaxRow {
+		if f.Rows.Next() {
+
+			f.CurRow++
+			columns, err := f.Rows.Columns()
+			if err != nil {
+				log.Fatal(err)
+			}
+			colLength := len(columns)
+			colTypes, err := f.Rows.ColumnTypes()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			xlsVals := make([]string, colLength)
+			dataRow, err := f.Rows.SliceScan()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for i := 0; i < colLength; i++ {
+				colValue := dataRow[i]
+				xlsVals[i] = f.StringColumnValue(colTypes[i], colValue)
+			}
+
+			return xlsVals
+		}
+		fmt.Println(f.CurRow)
+	}
+	return nil
+
+}
+
+func (f *ExcelFetcher) StringColumnValue(colType *sql.ColumnType, val interface{}) string {
+
+	var result string
+	if val == nil {
+		return result
+	}
+
+	tn := colType.DatabaseTypeName()
+
+	if tn == "CHAR" || tn == "NCHAR" || tn == "NVARCHAR" || tn == "NVARCHAR2" {
+		result = strings.TrimRight(string(val.([]byte)), " ")
+	} else if tn == "DATE" || tn == "DATETIME" || tn == "TIMESTAMP" {
+		tm := val.(time.Time)
+		zeroTm := time.Time{}
+		if tm == zeroTm {
+			result = ""
+		} else {
+			result = tm.Format("2006-01-02 15:04:05")
+		}
+	} else if tn == "BINARY" {
+		result = fmt.Sprintf("%d", binary.BigEndian.Uint64(val.([]byte)))
+	} else if tn == "MONEY" || tn == "DECIMAL" || tn == "FLOAT" || tn == "DOUBLE" {
+		result = string(val.([]byte))
+	} else if tn == "UNIQUEIDENTIFIER" {
+		if uid, err := uuid.FromBytes(val.([]byte)); err == nil {
+			result = uid.String()
+		}
+	} else if _, ok := colType.Nullable(); ok && val == nil {
+		result = store.NullValue
+	} else {
+		result = string(val.([]byte))
+	}
+	return result
+
+}
+
+func exporterLowMemory(db *sqlx.DB) error {
+	sql := "select * from logs"
+	ctx, cancel := context.WithTimeout(context.Background(), 600*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryxContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	fetcher := ExcelFetcher{Rows: rows, CurRow: 1, MaxRow: 1000000}
+	ee.Export(filename, &fetcher)
+	return nil
 }
 
 func exporter(db *sqlx.DB) error {
@@ -103,8 +203,6 @@ func exporter(db *sqlx.DB) error {
 
 func initData(db *sqlx.DB) error {
 
-	var err error
-
 	logInfo := &Log{
 		PageURL:      "http://bing.com?id=aaf_afsd_adsf",
 		ProductName:  "I'd check to see what that library you're using requires",
@@ -122,20 +220,30 @@ func initData(db *sqlx.DB) error {
 	wg := sync.WaitGroup{}
 	st := time.Now()
 
-	var sql = `
-		insert into logs(appid, author, build_version, copyright, created_at, page_url, product_name, proto, user_id) values(
-		:appid, :author, :build_version, :copyright, :created_at, :page_url, :product_name, :proto, :user_id)
-	`
-
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		go func() {
 			wg.Add(1)
-			for ii := 0; ii < 1000; ii++ {
-				_, err = db.NamedExecContext(ctx, sql, logInfo)
-				if err != nil {
-					log.Fatal(err)
-				}
+
+			vals := []interface{}{}
+			sql := "insert into logs(appid, author, build_version, copyright, created_at, page_url, product_name, proto, user_id) values"
+
+			for i := 0; i < 20; i++ {
+				sql += "(?,?,?,?,?,?,?,?,?),"
+				vals = append(vals, logInfo.APPID, logInfo.Author, logInfo.BuildVersion, logInfo.Copyright, logInfo.CreatedAt,
+					logInfo.PageURL, logInfo.ProductName, logInfo.Proto, logInfo.UserID)
 			}
+
+			sql = sql[0 : len(sql)-1]
+			stmt, err := db.DB.Prepare(sql)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			_, err = stmt.ExecContext(ctx, vals...)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			defer wg.Done()
 		}()
 	}
@@ -163,7 +271,7 @@ func main() {
 
 	st := time.Now()
 	fmt.Println("start export ..")
-	err = exporter(db)
+	err = exporterLowMemory(db)
 	fmt.Println("total take: ", time.Now().Sub(st).Seconds())
 	if err != nil {
 		log.Fatal(err)

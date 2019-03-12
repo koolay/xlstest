@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:e68906461ad4d9de54eff7fa5545c7af513a73a8d9453f7c3824786964bfbd71"
+  name = "github.com/eaciit/hoboexcel"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "88c99167121ae153a86ac8e33757379f51484c2f"
+
+[[projects]]
   digest = "1:ec6f9bf5e274c833c911923c9193867f3f18788c461f76f05f62bb1510e0ae65"
   name = "github.com/go-sql-driver/mysql"
   packages = ["."]
@@ -63,6 +71,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/eaciit/hoboexcel",
     "github.com/go-sql-driver/mysql",
     "github.com/jmoiron/sqlx",
     "github.com/plandem/xlsx",
