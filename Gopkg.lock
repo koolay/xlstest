@@ -10,6 +10,48 @@
   version = "v1.4.1"
 
 [[projects]]
+  digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
+  name = "github.com/jmoiron/sqlx"
+  packages = [
+    ".",
+    "reflectx",
+  ]
+  pruneopts = "UT"
+  revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:44b9550f61e9c7c40bca0748a4b69c23fe3768967b2a1fdaf13ccf7fdfbc1b43"
+  name = "github.com/plandem/ooxml"
+  packages = [
+    ".",
+    "ml",
+  ]
+  pruneopts = "UT"
+  revision = "94e08e588502acf53ffd38f4fa2b802c2b47a6a3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:be19b4ccc7d5dbbd3e8337825fc203d99398714ac27d4a725788c534ac4168c8"
+  name = "github.com/plandem/xlsx"
+  packages = [
+    ".",
+    "format",
+    "internal",
+    "internal/color",
+    "internal/hash",
+    "internal/ml",
+    "internal/ml/primitives",
+    "internal/number_format",
+    "internal/number_format/convert",
+    "options",
+    "types",
+  ]
+  pruneopts = "UT"
+  revision = "32c586e821decd7338911142072550d954b427d6"
+
+[[projects]]
   digest = "1:c25289f43ac4a68d88b02245742347c94f1e108c534dda442188015ff80669b3"
   name = "google.golang.org/appengine"
   packages = ["cloudsql"]
@@ -20,6 +62,10 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/go-sql-driver/mysql"]
+  input-imports = [
+    "github.com/go-sql-driver/mysql",
+    "github.com/jmoiron/sqlx",
+    "github.com/plandem/xlsx",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
