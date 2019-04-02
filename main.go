@@ -16,7 +16,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/plandem/xlsx"
-	"mingyuanyun.com/mic/dmp-datahub/store"
+
+	// "mingyuanyun.com/mic/dmp-datahub/store"
 
 	ee "github.com/eaciit/hoboexcel"
 	_ "github.com/go-sql-driver/mysql"
@@ -91,7 +92,6 @@ func (f *ExcelFetcher) NextRow() []string {
 
 			return xlsVals
 		}
-		fmt.Println(f.CurRow)
 	}
 	return nil
 
@@ -125,7 +125,7 @@ func (f *ExcelFetcher) StringColumnValue(colType *sql.ColumnType, val interface{
 			result = uid.String()
 		}
 	} else if _, ok := colType.Nullable(); ok && val == nil {
-		result = store.NullValue
+		// result = store.NullValue
 	} else {
 		result = string(val.([]byte))
 	}

@@ -1,6 +1,6 @@
 # Gopkg.toml example
 #
-# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -25,26 +25,22 @@
 #   unused-packages = true
 
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/afex/hystrix-go"
+
+[[constraint]]
+  name = "github.com/gojektech/valkyrie"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.1.4"
+
 [prune]
   go-tests = true
   unused-packages = true
-
-[[constraint]]
-  name = "github.com/jmoiron/sqlx"
-  version = "1.2.0"
-
-[[constraint]]
-  name = "github.com/go-sql-driver/mysql"
-  version = "1.4.1"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/plandem/xlsx"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/eaciit/hoboexcel"
-
-[[constraint]]
-  name = "github.com/gojektech/heimdall"
-  version = "5.0.2"

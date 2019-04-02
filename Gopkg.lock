@@ -18,6 +18,33 @@
   version = "v1.4.1"
 
 [[projects]]
+  digest = "1:bed9d72d596f94e65fff37f4d6c01398074a6bb1c3f3ceff963516bd01db6ff5"
+  name = "github.com/gofrs/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6b08a5c5172ba18946672b49749cde22873dd7c2"
+  version = "v3.2.0"
+
+[[projects]]
+  digest = "1:1a4463b400230c46b19676d74552bf24dfddc5287c0e4f3d86bcfec07ad3e666"
+  name = "github.com/gojektech/heimdall"
+  packages = [
+    ".",
+    "httpclient",
+  ]
+  pruneopts = "UT"
+  revision = "d96502fee6ce808d44580bd44f1a168fa633bd66"
+  version = "v5.0.2"
+
+[[projects]]
+  digest = "1:4f9da36d750deeff2ed82b44b15245337d1a2f1bf8a671c80f97059d7ce8517d"
+  name = "github.com/gojektech/valkyrie"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6aee720afcdffc337029305c126e0079491063f0"
+  version = "v1.0"
+
+[[projects]]
   digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
   name = "github.com/jmoiron/sqlx"
   packages = [
@@ -27,6 +54,14 @@
   pruneopts = "UT"
   revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   branch = "master"
@@ -73,6 +108,9 @@
   input-imports = [
     "github.com/eaciit/hoboexcel",
     "github.com/go-sql-driver/mysql",
+    "github.com/gofrs/uuid",
+    "github.com/gojektech/heimdall",
+    "github.com/gojektech/heimdall/httpclient",
     "github.com/jmoiron/sqlx",
     "github.com/plandem/xlsx",
   ]
