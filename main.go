@@ -14,10 +14,8 @@ import (
 
 	"context"
 
-	"github.com/gofrs/uuid"
 	"github.com/plandem/xlsx"
-
-	// "mingyuanyun.com/mic/dmp-datahub/store"
+	"github.com/satori/go.uuid"
 
 	ee "github.com/eaciit/hoboexcel"
 	_ "github.com/go-sql-driver/mysql"
@@ -25,8 +23,9 @@ import (
 )
 
 var (
-	dbURL    = "root:dev@tcp(localhost:3306)/xlstest?parseTime=true"
-	filename = "xlstest.xlsx"
+	dbURL     = "root:dev@tcp(localhost:3306)/xlstest?parseTime=true"
+	filename  = "xlstest.xlsx"
+	nullValue = ""
 )
 
 type Log struct {
@@ -125,7 +124,7 @@ func (f *ExcelFetcher) StringColumnValue(colType *sql.ColumnType, val interface{
 			result = uid.String()
 		}
 	} else if _, ok := colType.Nullable(); ok && val == nil {
-		// result = store.NullValue
+		result = nullValue
 	} else {
 		result = string(val.([]byte))
 	}
