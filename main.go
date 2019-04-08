@@ -14,8 +14,8 @@ import (
 
 	"context"
 
+	"github.com/gofrs/uuid"
 	"github.com/plandem/xlsx"
-	"github.com/satori/go.uuid"
 
 	ee "github.com/eaciit/hoboexcel"
 	_ "github.com/go-sql-driver/mysql"
@@ -23,9 +23,8 @@ import (
 )
 
 var (
-	dbURL     = "root:dev@tcp(localhost:3306)/xlstest?parseTime=true"
-	filename  = "xlstest.xlsx"
-	nullValue = ""
+	dbURL    = "root:dev@tcp(localhost:3306)/xlstest?parseTime=true"
+	filename = "xlstest.xlsx"
 )
 
 type Log struct {
@@ -130,6 +129,24 @@ func (f *ExcelFetcher) StringColumnValue(colType *sql.ColumnType, val interface{
 	}
 	return result
 
+}
+
+func exportBetter(db *sqlx.DB) error {
+	sql := "select * from logs"
+	outputPath := filename
+	ctx, cancel := context.WithTimeout(context.Background(), 600*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryxContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	writter := NewXLSWriter(rows, &MysqlColumnConverter{}, 0)
+	exportor := NewXLSExportor(sql, outputPath, writter)
+	return exportor.Export()
 }
 
 func exporterLowMemory(db *sqlx.DB) error {
@@ -270,7 +287,8 @@ func main() {
 
 	st := time.Now()
 	fmt.Println("start export ..")
-	err = exporterLowMemory(db)
+	// err = exporterLowMemory(db)
+	err = exportBetter(db)
 	fmt.Println("total take: ", time.Now().Sub(st).Seconds())
 	if err != nil {
 		log.Fatal(err)

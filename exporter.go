@@ -1,43 +1,43 @@
 package main
 
 import (
-	"time"
-	"log"
-	"fmt"
-	"strings"
-	"encoding/binary"
 	"database/sql"
+	"encoding/binary"
+	"fmt"
+	"log"
+	"strings"
+	"time"
 
+	ee "github.com/eaciit/hoboexcel"
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
-	ee "github.com/eaciit/hoboexcel"
 )
 
+var nullValue = ""
+
 type XLSExportor struct {
-	SQL string
+	SQL        string
 	OutputPath string
-	MaxRows  int
-	writer Writer
+	writer     Writer
 }
 
 type SQLColumnConverter interface {
-	Convert(colType *sql.ColumnType, val interface{}) string 
+	Convert(colType *sql.ColumnType, val interface{}) string
 }
 
 type MysqlColumnConverter struct {
 }
 
-func NewXLSExportor(sql, outputPath string, maxRows int, writer Writer) *XLSExportor {
+func NewXLSExportor(sql, outputPath string, writer Writer) *XLSExportor {
 	return &XLSExportor{
-		SQL: sql,
+		SQL:        sql,
 		OutputPath: outputPath,
-		MaxRows: maxRows,
-		writer: writer,
+		writer:     writer,
 	}
 }
 
-func Convert(colType *sql.ColumnType, val interface{}) string {
-	
+func (sc MysqlColumnConverter) Convert(colType *sql.ColumnType, val interface{}) string {
+
 	var result string
 	if val == nil {
 		return result
@@ -64,7 +64,7 @@ func Convert(colType *sql.ColumnType, val interface{}) string {
 			result = uid.String()
 		}
 	} else if _, ok := colType.Nullable(); ok && val == nil {
-		// result = store.NullValue
+		result = nullValue
 	} else {
 		result = string(val.([]byte))
 	}
@@ -76,46 +76,55 @@ type Writer interface {
 }
 
 type XLSWriter struct {
-	curRow int
-	maxRow int
-	Rows   *sqlx.Rows
+	curRow       int
+	maxRow       int
+	rows         *sqlx.Rows
 	colConverter SQLColumnConverter
 }
 
-func (exp XLSExportor) Export()  error {
+func NewXLSWriter(rows *sqlx.Rows, colConverter SQLColumnConverter, maxRow int) *XLSWriter {
+	return &XLSWriter{
+		maxRow:       maxRow,
+		rows:         rows,
+		colConverter: colConverter,
+	}
+}
+
+func (exp *XLSExportor) Export() error {
 	// fetcher := exp.writer. ExcelFetcher{Rows: rows, CurRow: 1, MaxRow: 1000000}
 	ee.Export(exp.OutputPath, exp.writer)
 	return nil
 }
 
-func (w XLSWriter) NextRow() []string {
-	
-	if w.curRow <= w.maxRow {
+func (w *XLSWriter) NextRow() []string {
+	if w.maxRow > 0 && w.curRow >= w.maxRow {
+		return nil
+	}
+
+	if w.rows.Next() {
 		w.curRow++
-		if w.Rows.Next() {
 
-			columns, err := w.Rows.Columns()
-			if err != nil {
-				log.Fatal(err)
-			}
-			colLength := len(columns)
-			colTypes, err := w.Rows.ColumnTypes()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			xlsVals := make([]string, colLength)
-			dataRow, err := w.Rows.SliceScan()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for i := 0; i < colLength; i++ {
-				colValue := dataRow[i]
-				xlsVals[i] = w.colConverter.Convert(colTypes[i], colValue)
-			}
-			return xlsVals
+		columns, err := w.rows.Columns()
+		if err != nil {
+			log.Fatal(err)
 		}
+		colLength := len(columns)
+		colTypes, err := w.rows.ColumnTypes()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		xlsVals := make([]string, colLength)
+		dataRow, err := w.rows.SliceScan()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for i := 0; i < colLength; i++ {
+			colValue := dataRow[i]
+			xlsVals[i] = w.colConverter.Convert(colTypes[i], colValue)
+		}
+		return xlsVals
 	}
 	return nil
 }
